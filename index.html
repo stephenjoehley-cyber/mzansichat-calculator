@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MzansiChat ROI Calculator</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+const { useState, useEffect } = React;
+
+// Icon components (simplified SVG versions)
+const Calculator = () => (
+  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <rect x="4" y="2" width="16" height="20" rx="2" strokeWidth="2"/>
+    <line x1="8" y1="6" x2="16" y2="6" strokeWidth="2"/>
+    <line x1="8" y1="10" x2="16" y2="10" strokeWidth="2"/>
+    <line x1="8" y1="14" x2="10" y2="14" strokeWidth="2"/>
+    <line x1="14" y1="14" x2="16" y2="14" strokeWidth="2"/>
+  </svg>
+);
+
+const TrendingUp = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" strokeWidth="2"/>
+    <polyline points="17 6 23 6 23 12" strokeWidth="2"/>
+  </svg>
+);
+
+const DollarSign = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <line x1="12" y1="1" x2="12" y2="23" strokeWidth="2"/>
+    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" strokeWidth="2"/>
+  </svg>
+);
+
+const Clock = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+    <polyline points="12 6 12 12 16 14" strokeWidth="2"/>
+  </svg>
+);
+
+const AlertCircle = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+    <line x1="12" y1="8" x2="12" y2="12" strokeWidth="2"/>
+    <line x1="12" y1="16" x2="12.01" y2="16" strokeWidth="2"/>
+  </svg>
+);
+
+const ROICalculator = () => {
+  const [industry, setIndustry] = useState('security');
+  const [staffCount, setStaffCount] = useState(100);
+  const [primaryProblem, setPrimaryProblem] = useState('noshows');
+  const [results, setResults] = useState(null);
+
+  // Industry-specific data
+  const industries = {
+    security: {
+      name: 'Security & Guarding',
+      pilotCost: 15000,
+      perUserCost: 30,
+      problems: {
+        noshows: {
+          label: 'No-shows (10-20% of shifts)',
+          calculate: (staff) => ({
+            currentLoss: staff * 0.15 * 800 * 20,
+            afterSaving: staff * 0.03 * 800 * 20,
+            description: 'No-shows drop from 15% to 3%'
+          })
+        },
+        incidents: {
+          label: 'Poor incident documentation',
+          calculate: (staff) => ({
+            currentLoss: 20000,
+            afterSaving: 2000,
+            description: 'Proper incident logs prevent contract losses'
+          })
+        },
+        compliance: {
+          label: 'PSIRA compliance failures',
+          calculate: (staff) => ({
+            currentLoss: 50000 / 12,
+            afterSaving: 0,
+            description: 'Audit-ready logs eliminate compliance risk'
+          })
+        },
+        admintime: {
+          label: 'Admin time waste (3-4 hrs/day)',
+          calculate: (staff) => ({
+            currentLoss: 3.5 * 250 * 20,
+            afterSaving: 0.5 * 250 * 20,
+            description: 'Confirmation tracking saves 3 hours daily'
+          })
+        }
+      }
+    },
+    cleaning: {
+      name: 'Cleaning & Facilities',
+      pilotCost: 15000,
+      perUserCost: 30,
+      problems: {
+        noshows: {
+          label: 'No-shows (12-18% of assignments)',
+          calculate: (staff) => ({
+            currentLoss: staff * 0.15 * 600 * 20,
+            afterSaving: staff * 0.03 * 600 * 20,
+            description: 'No-shows drop from 15% to 3%'
+          })
+        },
+        quality: {
+          label: 'Quality complaints & lost contracts',
+          calculate: (staff) => ({
+            currentLoss: 25000,
+            afterSaving: 3000,
+            description: 'Photo proof of work prevents disputes'
+          })
+        },
+        supplies: {
+          label: 'Supply waste & shortage issues',
+          calculate: (staff) => ({
+            currentLoss: 15000,
+            afterSaving: 3000,
+            description: 'Supply alerts prevent waste & delays'
+          })
+        },
+        admintime: {
+          label: 'Admin time waste (2-3 hrs/day)',
+          calculate: (staff) => ({
+            currentLoss: 2.5 * 250 * 20,
+            afterSaving: 0.5 * 250 * 20,
+            description: 'Automated confirmations save 2 hours daily'
+          })
+        }
+      }
+    },
+    construction: {
+      name: 'Construction & Trades',
+      pilotCost: 18000,
+      perUserCost: 35,
+      problems: {
+        timesheet: {
+          label: 'Timesheet fraud (5-10% padding)',
+          calculate: (staff) => ({
+            currentLoss: staff * 0.075 * 4000,
+            afterSaving: staff * 0.01 * 4000,
+            description: 'GPS clock-in eliminates timesheet fraud'
+          })
+        },
+        tools: {
+          label: 'Tool theft/loss',
+          calculate: (staff) => ({
+            currentLoss: 50000 / 12,
+            afterSaving: 5000 / 12,
+            description: 'Tool check-out tracking prevents losses'
+          })
+        },
+        safety: {
+          label: 'Safety incidents (poor documentation)',
+          calculate: (staff) => ({
+            currentLoss: 30000,
+            afterSaving: 5000,
+            description: 'COIDA-compliant incident reports'
+          })
+        },
+        admintime: {
+          label: 'Admin time waste (4-5 hrs/day)',
+          calculate: (staff) => ({
+            currentLoss: 4.5 * 250 * 20,
+            afterSaving: 0.5 * 250 * 20,
+            description: 'Automated timesheets save 4 hours daily'
+          })
+        }
+      }
+    },
+    hospitality: {
+      name: 'Hospitality & Events',
+      pilotCost: 12000,
+      perUserCost: 25,
+      problems: {
+        noshows: {
+          label: 'No-shows (15-25% of events)',
+          calculate: (staff) => ({
+            currentLoss: staff * 0.20 * 500 * 8,
+            afterSaving: staff * 0.04 * 500 * 8,
+            description: 'No-shows drop from 20% to 4%'
+          })
+        },
+        uniform: {
+          label: 'Uniform/appearance issues',
+          calculate: (staff) => ({
+            currentLoss: 12000,
+            afterSaving: 2000,
+            description: 'Pre-shift photo verification prevents issues'
+          })
+        },
+        coordination: {
+          label: 'Multi-venue coordination chaos',
+          calculate: (staff) => ({
+            currentLoss: 18000,
+            afterSaving: 3000,
+            description: 'GPS check-ins give real-time visibility'
+          })
+        },
+        admintime: {
+          label: 'Admin time waste (2-3 hrs/day)',
+          calculate: (staff) => ({
+            currentLoss: 2.5 * 250 * 20,
+            afterSaving: 0.5 * 250 * 20,
+            description: 'Event confirmations save 2 hours daily'
+          })
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    calculateROI();
+  }, [industry, staffCount, primaryProblem]);
+
+  const calculateROI = () => {
+    const industryData = industries[industry];
+    const problemData = industryData.problems[primaryProblem];
+    const problemCalc = problemData.calculate(staffCount);
+
+    const monthlySavings = problemCalc.currentLoss - problemCalc.afterSaving;
+    const sixMonthSavings = monthlySavings * 6;
+    const sixMonthCost = industryData.pilotCost + (industryData.perUserCost * staffCount * 6);
+    const netBenefit = sixMonthSavings - sixMonthCost;
+    const roi = ((netBenefit / sixMonthCost) * 100).toFixed(0);
+    const paybackDays = Math.ceil((sixMonthCost / monthlySavings) * 30);
+
+    setResults({
+      currentLoss: problemCalc.currentLoss,
+      monthlySavings,
+      sixMonthSavings,
+      sixMonthCost,
+      netBenefit,
+      roi,
+      paybackDays,
+      description: problemCalc.description
+    });
+  };
+
+  const formatCurrency = (amount) => {
+    return 'R' + new Intl.NumberFormat('en-ZA', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto p-6 bg-white">
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <Calculator />
+          <h1 className="text-3xl font-bold" style={{color: '#031E61'}}>ROI Calculator</h1>
+        </div>
+        <p className="text-gray-600 text-lg">
+          See what MzansiChat could save your business in 6 months
+        </p>
+      </div>
+
+      <div className="bg-gray-50 rounded-lg p-6 mb-8 border-2 border-gray-200">
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Step 1: Select Your Industry
+            </label>
+            <select
+              value={industry}
+              onChange={(e) => {
+                setIndustry(e.target.value);
+                setPrimaryProblem(Object.keys(industries[e.target.value].problems)[0]);
+              }}
+              className="w-full p-3 border-2 border-gray-300 rounded-lg text-lg focus:outline-none"
+              style={{borderColor: '#008349'}}
+            >
+              {Object.entries(industries).map(([key, data]) => (
+                <option key={key} value={key}>{data.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Step 2: How Many Staff? <span className="text-2xl font-bold" style={{color: '#031E61'}}>{staffCount}</span>
+            </label>
+            <input
+              type="range"
+              min="50"
+              max="1000"
+              step="10"
+              value={staffCount}
+              onChange={(e) => setStaffCount(parseInt(e.target.value))}
+              className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              style={{accentColor: '#008349'}}
+            />
+            <div className="flex justify-between text-sm text-gray-500 mt-1">
+              <span>50</span>
+              <span>1,000</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Step 3: What's Your Biggest Cost Problem?
+            </label>
+            <select
+              value={primaryProblem}
+              onChange={(e) => setPrimaryProblem(e.target.value)}
+              className="w-full p-3 border-2 border-gray-300 rounded-lg text-lg focus:outline-none"
+              style={{borderColor: '#008349'}}
+            >
+              {Object.entries(industries[industry].problems).map(([key, data]) => (
+                <option key={key} value={key}>{data.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {results && (
+        <div className="space-y-6">
+          <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
+            <h3 className="text-xl font-bold text-red-900 mb-4 flex items-center gap-2">
+              <AlertCircle />
+              Current State (Without MzansiChat)
+            </h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700">Monthly operational losses:</span>
+                <span className="text-2xl font-bold text-red-700">{formatCurrency(results.currentLoss)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700">6-month total losses:</span>
+                <span className="text-2xl font-bold text-red-900">{formatCurrency(results.currentLoss * 6)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2" style={{color: '#031E61'}}>
+              <DollarSign />
+              With MzansiChat
+            </h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-700">Setup + 6 months service:</span>
+                <span className="font-semibold text-gray-900">{formatCurrency(results.sixMonthCost)}</span>
+              </div>
+              <div className="text-xs text-gray-500 text-right">
+                ({formatCurrency(industries[industry].pilotCost)} pilot + {formatCurrency(industries[industry].perUserCost)} × {staffCount} staff × 6 months)
+              </div>
+              <div className="border-t-2 border-blue-200 my-3"></div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700">Estimated monthly savings:</span>
+                <span className="text-2xl font-bold" style={{color: '#008349'}}>{formatCurrency(results.monthlySavings)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700">6-month total savings:</span>
+                <span className="text-2xl font-bold" style={{color: '#008349'}}>{formatCurrency(results.sixMonthSavings)}</span>
+              </div>
+              <div className="bg-white rounded p-3 mt-3">
+                <p className="text-sm text-gray-600 italic">
+                  <strong>How:</strong> {results.description}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-4 rounded-lg p-6" style={{backgroundColor: '#E8F5E9', borderColor: '#008349'}}>
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2" style={{color: '#008349'}}>
+              <TrendingUp />
+              Your 6-Month Net Benefit
+            </h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-lg text-gray-700">Net savings after costs:</span>
+                <span className="text-4xl font-bold" style={{color: '#008349'}}>{formatCurrency(results.netBenefit)}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white rounded-lg p-4 border-2" style={{borderColor: '#008349'}}>
+                  <div className="text-sm text-gray-600 mb-1">ROI</div>
+                  <div className="text-3xl font-bold" style={{color: '#008349'}}>{results.roi}%</div>
+                </div>
+                <div className="bg-white rounded-lg p-4 border-2" style={{borderColor: '#008349'}}>
+                  <div className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                    <Clock />
+                    Payback Period
+                  </div>
+                  <div className="text-3xl font-bold" style={{color: '#008349'}}>{results.paybackDays} days</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <button 
+              className="flex-1 text-white font-bold py-4 px-6 rounded-lg text-lg transition-colors"
+              style={{backgroundColor: '#008349'}}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#006835'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#008349'}
+              onClick={() => window.parent.postMessage({action: 'getQuote'}, '*')}
+            >
+              Get Detailed Quote
+            </button>
+            <button 
+              className="flex-1 text-white font-bold py-4 px-6 rounded-lg text-lg transition-colors"
+              style={{backgroundColor: '#031E61'}}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#021542'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#031E61'}
+              onClick={() => window.open('https://calendly.com/stephenjoehley/30min', '_blank')}
+            >
+              Book Discovery Call
+            </button>
+          </div>
+
+          <div className="bg-gray-100 rounded-lg p-4 text-center">
+            <p className="text-sm text-gray-600">
+              <strong>Conservative estimates</strong> based on industry averages.<br />
+              Your actual results may vary. Let's discuss your specific situation.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+ReactDOM.render(<ROICalculator />, document.getElementById('root'));
+    </script>
+</body>
+</html>
+ 
+
