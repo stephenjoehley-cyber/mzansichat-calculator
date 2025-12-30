@@ -408,7 +408,7 @@ const ROICalculator = () => {
               style={{backgroundColor: '#008349'}}
               onMouseOver={(e) => e.target.style.backgroundColor = '#006835'}
               onMouseOut={(e) => e.target.style.backgroundColor = '#008349'}
-              onClick={() => window.parent.postMessage({action: 'getQuote'}, '*')}
+              onClick={() => window.open('https://calendly.com/stephenjoehley/30min', '_blank')}
             >
               Get Detailed Quote
             </button>
@@ -417,7 +417,7 @@ const ROICalculator = () => {
               style={{backgroundColor: '#031E61'}}
               onMouseOver={(e) => e.target.style.backgroundColor = '#021542'}
               onMouseOut={(e) => e.target.style.backgroundColor = '#031E61'}
-              onClick={() => window.open('onClick={() => window.open('https://calendly.com/stephenjoehley/30min?back=1&month=2025-12', '_blank')}', '_blank')}
+              onClick={() => window.open('https://www.mzansichat.co.za/contact', '_blank')}
             >
               Book Discovery Call
             </button>
@@ -440,4 +440,5 @@ ReactDOM.render(<ROICalculator />, document.getElementById('root'));
 </body>
 </html>
  
+
 
